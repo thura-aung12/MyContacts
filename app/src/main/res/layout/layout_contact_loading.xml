@@ -22,14 +22,14 @@
         android:layout_marginStart="8dp">
 
         <View
-            android:layout_width="match_parent"
-            android:layout_height="20dp"
+            android:layout_width="100dp"
+            android:layout_height="15dp"
             android:layout_marginBottom="4dp"
             android:background="@drawable/drawable_background"/>
 
         <View
-            android:layout_width="match_parent"
-            android:layout_height="20dp"
+            android:layout_width="150dp"
+            android:layout_height="15dp"
             android:background="@drawable/drawable_background"/>
 
     </LinearLayout>

@@ -1,7 +1,6 @@
 package com.thuraaung.mycontacts.fragments
 
 import android.annotation.SuppressLint
-import android.content.DialogInterface
 import android.database.Cursor
 import android.os.Bundle
 import android.os.Handler
@@ -9,17 +8,13 @@ import android.provider.ContactsContract
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
+import android.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.CursorLoader
 import androidx.loader.content.Loader
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.thuraaung.mycontacts.*
+import com.thuraaung.mycontacts.TestAdapter
 import com.thuraaung.mycontacts.databinding.FragmentContactsBinding
-import java.util.*
 
 class ContactsFragment : Fragment(),
     LoaderManager.LoaderCallbacks<Cursor> {
@@ -36,20 +31,24 @@ class ContactsFragment : Fragment(),
         )
 
         @SuppressLint("InlinedApi")
-        private val SELECTION: String =
-            "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME} LIKE ?"
+        const val SELECTION: String =
+            "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME} LIKE ? "
+
+        const val SORT_ORDER =
+            "${ContactsContract.Contacts.DISPLAY_NAME_PRIMARY} ASC"
+        const val SEARCH_STRING = "SEARCH_STRING"
     }
 
+    private var mSearchString: String = "%"
+
     private lateinit var binding: FragmentContactsBinding
-    private val contactAdapter = ContactAdapter()
     private lateinit var testAdapter: TestAdapter
 
-    private lateinit var contactList : List<ContactModel>
 
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        loaderManager.initLoader(0, null, this)
+        loaderManager.initLoader(0, savedInstanceState, this)
     }
 
     override fun onCreateView(
@@ -62,21 +61,33 @@ class ContactsFragment : Fragment(),
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                return true
+            }
 
-        binding.rvContact.apply {
-            adapter = contactAdapter
-            layoutManager = LinearLayoutManager(context)
-        }
+            override fun onQueryTextChange(newText: String?): Boolean {
+                if (!newText.isNullOrEmpty()) {
+                    filterContact(newText)
+                } else {
+                    filterContact()
+                }
+                return true
+            }
+        })
     }
 
     override fun onCreateLoader(id: Int, args: Bundle?): Loader<Cursor> {
+
+        args?.let {
+            mSearchString = it.getString(SEARCH_STRING,"%")
+        }
         return activity?.let {
             return CursorLoader(
                 it,ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
                 PROJECTION,
-                null,
-                null, "${ContactsContract.Contacts.DISPLAY_NAME_PRIMARY} ASC"
-            )
+                SELECTION,
+                arrayOf(mSearchString), SORT_ORDER)
         } ?: throw IllegalStateException()
     }
 
@@ -88,26 +99,31 @@ class ContactsFragment : Fragment(),
 
             binding.lytShimmer.stopShimmer()
             binding.lytShimmer.visibility = View.GONE
-            contactList = cursor.getContactList()
-            filterContact()
+
+            testAdapter = TestAdapter(requireContext(),cursor)
+            binding.rvContact.adapter = testAdapter
 
         },1000)
 
     }
 
     override fun onLoaderReset(loader: Loader<Cursor>) {
+        testAdapter.swapCursor(null)
     }
 
-    private fun filterContact(searchString : String = "") {
-        val filteredContacts = mutableListOf<ContactModel>()
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(SEARCH_STRING,mSearchString)
+    }
 
-        for(contact in contactList) {
-            contact.name?.also {
-                if (it.toLowerCase(Locale.getDefault()).startsWith(searchString.toLowerCase(Locale.getDefault())))
-                    filteredContacts.add(contact)
-            }
-        }
+    private fun filterContact(searchString : String = "%") {
 
-        contactAdapter.refreshContact(filteredContacts)
+        mSearchString = "%$searchString%"
+
+        val cursor = requireActivity().contentResolver.query(
+            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+            PROJECTION, SELECTION, arrayOf(mSearchString), SORT_ORDER)
+
+        testAdapter.swapCursor(cursor)
     }
 }
