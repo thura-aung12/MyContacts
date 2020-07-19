@@ -5,16 +5,21 @@ import android.database.Cursor
 import android.os.Bundle
 import android.os.Handler
 import android.provider.ContactsContract
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AbsListView
+import android.widget.AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL
 import android.widget.SearchView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.CursorLoader
 import androidx.loader.content.Loader
 import com.thuraaung.mycontacts.TestAdapter
 import com.thuraaung.mycontacts.databinding.FragmentContactsBinding
+import com.thuraaung.mycontacts.hideSoftKeyboard
 
 class ContactsFragment : Fragment(),
     LoaderManager.LoaderCallbacks<Cursor> {
@@ -75,6 +80,21 @@ class ContactsFragment : Fragment(),
                 return true
             }
         })
+
+        binding.rvContact.setOnScrollListener(object : AbsListView.OnScrollListener {
+            override fun onScroll(
+                view: AbsListView?,
+                firstVisibleItem: Int,
+                visibleItemCount: Int,
+                totalItemCount: Int
+            ) {}
+
+            override fun onScrollStateChanged(view: AbsListView?, scrollState: Int) {
+                if (scrollState == SCROLL_STATE_TOUCH_SCROLL) {
+                    requireActivity().hideSoftKeyboard()
+                }
+            }
+        })
     }
 
     override fun onCreateLoader(id: Int, args: Bundle?): Loader<Cursor> {
@@ -100,7 +120,9 @@ class ContactsFragment : Fragment(),
             binding.lytShimmer.stopShimmer()
             binding.lytShimmer.visibility = View.GONE
 
-            testAdapter = TestAdapter(requireContext(),cursor)
+            testAdapter = TestAdapter(requireContext(),cursor).apply {
+                itemClickListener = { name,phone -> Toast.makeText(context,"clicked $phone",Toast.LENGTH_SHORT).show()}
+            }
             binding.rvContact.adapter = testAdapter
 
         },1000)

@@ -11,11 +11,14 @@ import androidx.cursoradapter.widget.CursorAdapter
 
 class TestAdapter(context : Context,cursor : Cursor) : CursorAdapter(context,cursor,0) {
 
+    var itemClickListener : ((String,String) -> Unit)? = null
+
     override fun newView(context: Context?, cursor: Cursor?, parent: ViewGroup?): View {
         return LayoutInflater.from(context).inflate(R.layout.layout_contact_item,parent,false)
     }
 
     override fun bindView(view: View, context: Context?, cursor: Cursor) {
+
         val tvName : TextView = view.findViewById(R.id.tv_name)
         val tvPhone : TextView = view.findViewById(R.id.tv_phone)
 
@@ -23,8 +26,13 @@ class TestAdapter(context : Context,cursor : Cursor) : CursorAdapter(context,cur
         val phoneIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER)
         val imageUrlIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.PHOTO_THUMBNAIL_URI)
 
-        tvName.text = cursor.getString(nameIndex)
-        tvPhone.text = cursor.getString(phoneIndex)
+        val name = cursor.getString(nameIndex)
+        val phone = cursor.getString(phoneIndex)
+
+        tvName.text = name
+        tvPhone.text = phone
+
+        view.setOnClickListener { itemClickListener?.invoke(name,phone) }
 
     }
 }

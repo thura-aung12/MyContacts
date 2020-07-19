@@ -1,7 +1,20 @@
 package com.thuraaung.mycontacts
 
+import android.app.Activity
+import android.content.Context
 import android.database.Cursor
 import android.provider.ContactsContract
+import android.view.inputmethod.InputMethodManager
+
+fun Activity.hideSoftKeyboard() {
+    if(currentFocus != null) {
+        val inputMethodManager =
+            getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        inputMethodManager
+            .hideSoftInputFromWindow(currentFocus!!.windowToken,0)
+    }
+}
+
 
 fun Cursor.getContactList() : List<ContactModel> {
     val contacts = mutableListOf<ContactModel>()
