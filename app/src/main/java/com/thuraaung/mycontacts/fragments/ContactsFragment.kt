@@ -1,22 +1,23 @@
 package com.thuraaung.mycontacts.fragments
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.database.Cursor
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.provider.ContactsContract
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AbsListView
 import android.widget.AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL
 import android.widget.SearchView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.CursorLoader
 import androidx.loader.content.Loader
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.thuraaung.mycontacts.TestAdapter
 import com.thuraaung.mycontacts.databinding.FragmentContactsBinding
 import com.thuraaung.mycontacts.hideSoftKeyboard
@@ -121,7 +122,22 @@ class ContactsFragment : Fragment(),
             binding.lytShimmer.visibility = View.GONE
 
             testAdapter = TestAdapter(requireContext(),cursor).apply {
-                itemClickListener = { name,phone -> Toast.makeText(context,"clicked $phone",Toast.LENGTH_SHORT).show()}
+                itemClickListener = { name,phone ->
+                    MaterialAlertDialogBuilder(context)
+                        .setTitle("Are your sure?")
+                        .setMessage("Call $name($phone)")
+                        .setPositiveButton("Ok"
+                        ) { dialog , _ ->
+                            val intent = Intent(Intent.ACTION_CALL)
+                            intent.data = Uri.parse("tel:$phone")
+                            startActivity(intent)
+                            dialog.dismiss()
+                        }
+                        .setNegativeButton("Cancel") { _, _ ->
+
+                        }
+                        .show()
+                }
             }
             binding.rvContact.adapter = testAdapter
 

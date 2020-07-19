@@ -17,7 +17,10 @@ const val REQUEST_CODE_PERMISSION = 101
 
 class SplashActivity : AppCompatActivity() {
 
-    private val permissions = listOf(Manifest.permission.READ_CONTACTS)
+    private val permissions = listOf(
+        Manifest.permission.READ_CONTACTS,
+        Manifest.permission.CALL_PHONE)
+
     private var permissionRequestCount : Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
