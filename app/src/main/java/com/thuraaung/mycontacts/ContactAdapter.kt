@@ -1,52 +1,48 @@
 package com.thuraaung.mycontacts
 
+import android.content.Context
+import android.database.Cursor
+import android.provider.ContactsContract
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
-import androidx.recyclerview.widget.RecyclerView
+import androidx.cursoradapter.widget.CursorAdapter
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 
-class ContactAdapter : RecyclerView.Adapter<ContactAdapter.ContactViewHolder>() {
+class ContactAdapter(context : Context, cursor : Cursor) : CursorAdapter(context,cursor,0) {
 
-    private val contactList = mutableListOf<ContactModel>()
-    private var itemClickCallback : ((ContactModel) -> Unit)? = null
+    var itemClickListener : ((String,String) -> Unit)? = null
 
-    inner class  ContactViewHolder(view : View) : RecyclerView.ViewHolder(view) {
-
-        private val tvName : TextView = view.findViewById(R.id.tv_name)
-        private val tvPhone : TextView = view.findViewById(R.id.tv_phone)
-
-        init {
-            view.setOnClickListener {
-                itemClickCallback?.invoke(contactList[adapterPosition])
-            }
-        }
-
-        fun bind(contact : ContactModel) {
-            tvName.text = contact.name
-            tvPhone.text = contact.phoneNumber
-        }
+    override fun newView(context: Context?, cursor: Cursor?, parent: ViewGroup?): View {
+        return LayoutInflater.from(context).inflate(R.layout.layout_contact_item,parent,false)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ContactViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.layout_contact_item,parent,false)
-        return ContactViewHolder(view)
-    }
+    override fun bindView(view: View, context: Context?, cursor: Cursor) {
 
-    override fun getItemCount(): Int = contactList.size
+        val tvName : TextView = view.findViewById(R.id.tv_name)
+        val tvPhone : TextView = view.findViewById(R.id.tv_phone)
+        val imgContact : ImageView = view.findViewById(R.id.img_contact)
 
-    override fun onBindViewHolder(holder: ContactViewHolder, position: Int) {
-        holder.bind(contactList[position])
-    }
+        val nameIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
+        val phoneIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER)
+        val imageUrlIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.PHOTO_THUMBNAIL_URI)
 
-    fun setItemClickListener(listener : (ContactModel) -> Unit) {
-        itemClickCallback = listener
-    }
+        val name = cursor.getString(nameIndex)
+        val phone = cursor.getString(phoneIndex)
+        val imageUrl = cursor.getString(imageUrlIndex)
 
-    fun refreshContact(newContacts : List<ContactModel>) {
-        contactList.clear()
-        contactList.addAll(newContacts)
-        notifyDataSetChanged()
+        tvName.text = name
+        tvPhone.text = phone
+        Glide.with(view.context)
+            .load(imageUrl)
+            .placeholder(R.drawable.ic_baseline_account_circle_24)
+            .apply(RequestOptions.circleCropTransform())
+            .into(imgContact)
+
+        view.setOnClickListener { itemClickListener?.invoke(name,phone) }
+
     }
 }

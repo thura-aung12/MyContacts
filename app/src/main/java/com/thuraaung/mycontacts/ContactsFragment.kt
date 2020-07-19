@@ -1,4 +1,4 @@
-package com.thuraaung.mycontacts.fragments
+package com.thuraaung.mycontacts
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -18,9 +18,7 @@ import androidx.loader.app.LoaderManager
 import androidx.loader.content.CursorLoader
 import androidx.loader.content.Loader
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.thuraaung.mycontacts.TestAdapter
 import com.thuraaung.mycontacts.databinding.FragmentContactsBinding
-import com.thuraaung.mycontacts.hideSoftKeyboard
 
 class ContactsFragment : Fragment(),
     LoaderManager.LoaderCallbacks<Cursor> {
@@ -48,7 +46,7 @@ class ContactsFragment : Fragment(),
     private var mSearchString: String = "%"
 
     private lateinit var binding: FragmentContactsBinding
-    private lateinit var testAdapter: TestAdapter
+    private lateinit var contactAdapter: ContactAdapter
 
 
     @Suppress("DEPRECATION")
@@ -93,6 +91,7 @@ class ContactsFragment : Fragment(),
             override fun onScrollStateChanged(view: AbsListView?, scrollState: Int) {
                 if (scrollState == SCROLL_STATE_TOUCH_SCROLL) {
                     requireActivity().hideSoftKeyboard()
+                    binding.searchView.clearFocus()
                 }
             }
         })
@@ -108,7 +107,9 @@ class ContactsFragment : Fragment(),
                 it,ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
                 PROJECTION,
                 SELECTION,
-                arrayOf(mSearchString), SORT_ORDER)
+                arrayOf(mSearchString),
+                SORT_ORDER
+            )
         } ?: throw IllegalStateException()
     }
 
@@ -121,8 +122,10 @@ class ContactsFragment : Fragment(),
             binding.lytShimmer.stopShimmer()
             binding.lytShimmer.visibility = View.GONE
 
-            testAdapter = TestAdapter(requireContext(),cursor).apply {
+            contactAdapter = ContactAdapter(requireContext(),cursor).apply {
                 itemClickListener = { name,phone ->
+                    requireActivity().hideSoftKeyboard()
+                    binding.searchView.clearFocus()// hide keyboard first
                     MaterialAlertDialogBuilder(context)
                         .setTitle("Are your sure?")
                         .setMessage("Call $name($phone)")
@@ -139,14 +142,14 @@ class ContactsFragment : Fragment(),
                         .show()
                 }
             }
-            binding.rvContact.adapter = testAdapter
+            binding.rvContact.adapter = contactAdapter
 
         },1000)
 
     }
 
     override fun onLoaderReset(loader: Loader<Cursor>) {
-        testAdapter.swapCursor(null)
+        contactAdapter.swapCursor(null)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -160,8 +163,11 @@ class ContactsFragment : Fragment(),
 
         val cursor = requireActivity().contentResolver.query(
             ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-            PROJECTION, SELECTION, arrayOf(mSearchString), SORT_ORDER)
+            PROJECTION,
+            SELECTION, arrayOf(mSearchString),
+            SORT_ORDER
+        )
 
-        testAdapter.swapCursor(cursor)
+        contactAdapter.swapCursor(cursor)
     }
 }
